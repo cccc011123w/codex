@@ -173,6 +173,76 @@ def call_model(prompt: str) -> str:
     raise RuntimeError(f"Could not parse model response: {json.dumps(response, ensure_ascii=False)[:1000]}")
 
 
+def format_pct(value) -> str:
+    if value in (None, ""):
+        return "无数据"
+    try:
+        return f"{float(value):+.2f}%"
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def format_value(value) -> str:
+    if value in (None, ""):
+        return "无数据"
+    return str(value)
+
+
+def build_data_tables(fund_data: list[dict], watchlist_data: list[dict]) -> str:
+    lines = [
+        "## 实时估值同步",
+        "",
+        "### 当前持仓",
+        "",
+        "| 基金 | 代码 | 最新净值 | 净值日期 | 实时估值 | 估算涨跌幅 | 估值时间 |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+    ]
+
+    for item in fund_data:
+        holding = item.get("holding", {})
+        data = item.get("data", {})
+        lines.append(
+            "| {name} | {code} | {net_value} | {net_date} | {estimate} | {change_pct} | {estimate_time} |".format(
+                name=holding.get("name", ""),
+                code=holding.get("code", "") or data.get("code", ""),
+                net_value=format_value(data.get("net_value")),
+                net_date=format_value(data.get("net_value_date")),
+                estimate=format_value(data.get("estimated_value")),
+                change_pct=format_pct(data.get("estimated_change_pct")),
+                estimate_time=format_value(data.get("estimate_time")),
+            )
+        )
+
+    lines.extend(
+        [
+            "",
+            "### 进攻型观察池",
+            "",
+            "| 基金 | 代码 | 主题 | 最新净值 | 净值日期 | 实时估值 | 估算涨跌幅 | 估值时间 |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        ]
+    )
+
+    for item in watchlist_data:
+        candidate = item.get("candidate", {})
+        data = item.get("data", {})
+        lines.append(
+            "| {name} | {code} | {theme} | {net_value} | {net_date} | {estimate} | {change_pct} | {estimate_time} |".format(
+                name=candidate.get("name", ""),
+                code=candidate.get("code", "") or data.get("code", ""),
+                theme=candidate.get("theme", ""),
+                net_value=format_value(data.get("net_value")),
+                net_date=format_value(data.get("net_value_date")),
+                estimate=format_value(data.get("estimated_value")),
+                change_pct=format_pct(data.get("estimated_change_pct")),
+                estimate_time=format_value(data.get("estimate_time")),
+            )
+        )
+
+    lines.extend(["", "---", ""])
+    return "\n".join(lines)
+
+
 def send_email(subject: str, body: str) -> None:
     sender = require_env("QQMAIL_USER")
     recipient = os.environ.get("QQMAIL_TO", "").strip() or "1678221404@qq.com"
@@ -222,7 +292,7 @@ def main() -> int:
         print(f"Prompt chars: {len(prompt)}")
         return 0
 
-    strategy = call_model(prompt)
+    strategy = build_data_tables(fund_data, watchlist_data) + call_model(prompt)
 
     today = dt.datetime.now(dt.UTC) + dt.timedelta(hours=8)
     subject = f"基金交易策略 - {today:%Y-%m-%d}"
