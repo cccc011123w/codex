@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+.env
+latest_fund_strategy_email.md
