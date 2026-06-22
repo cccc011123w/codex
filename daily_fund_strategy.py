@@ -111,7 +111,7 @@ def fetch_index_snapshot() -> dict:
         return {"error": str(exc)}
 
 
-def build_prompt(config: dict, fund_data: list[dict], market_data: dict) -> str:
+def build_prompt(config: dict, fund_data: list[dict], watchlist_data: list[dict], market_data: dict) -> str:
     today = dt.datetime.now(dt.UTC) + dt.timedelta(hours=8)
     return f"""
 你是谨慎、可执行导向的中文基金交易策略助手。今天北京时间日期：{today:%Y-%m-%d %H:%M}。
@@ -124,17 +124,21 @@ def build_prompt(config: dict, fund_data: list[dict], market_data: dict) -> str:
 基金最新同步数据：
 {json.dumps(fund_data, ensure_ascii=False, indent=2)}
 
+进攻型基金观察池及最新同步数据：
+{json.dumps(watchlist_data, ensure_ascii=False, indent=2)}
+
 市场指数快照：
 {json.dumps(market_data, ensure_ascii=False, indent=2)}
 
 输出要求：
 1. 开头用 5 行以内给出“今日总决策”：持有、加仓、减仓、止盈、观望。
-2. 逐只基金列出：最新涨跌/估值变化、相对用户截图基准的风险变化、今日动作、触发条件、建议仓位区间。
+2. 逐只基金列出：基金代码、最新单位净值、净值日期、实时估算净值、估算涨跌幅、估值时间、相对用户截图基准的风险变化、今日动作、触发条件、建议仓位区间。
 3. 明确哪些持仓已有较高浮盈，是否要分批止盈或设置回撤线。
-4. 给出适合新建仓的方向，按优先级排序，说明建仓节奏和不买条件。
-5. 若今天可能不是交易日或数据缺失，明确标注，不要假装知道。
-6. 语言要简洁、可执行，避免空泛。
-7. 结尾声明：这不是个性化投资顾问意见，交易风险由用户自行承担。
+4. 单独输出“进攻型基金候选”：从观察池中挑选 2-4 个最适合今日关注或小仓试探的基金，必须写出代码、主题、估算涨跌幅、买入条件、首次试仓比例、止损/止盈条件；如果涨幅过大或风险不合适，要明确写“暂不追高”。
+5. 给出适合新建仓的方向，按优先级排序，说明建仓节奏和不买条件。进攻型仓位总额建议不超过总基金资产的 10%-20%，单只首次试仓不超过 3%-5%。
+6. 若今天可能不是交易日或数据缺失，明确标注，不要假装知道。
+7. 语言要简洁、可执行，避免空泛。
+8. 结尾声明：这不是个性化投资顾问意见，交易风险由用户自行承担。
 """
 
 
@@ -198,12 +202,22 @@ def main() -> int:
             item["data"] = {"status": "error", "error": str(exc)}
         fund_data.append(item)
 
+    watchlist_data = []
+    for candidate in config.get("aggressive_watchlist", []):
+        item = {"candidate": candidate}
+        try:
+            item["data"] = fetch_fund_estimate(candidate.get("code", ""))
+        except Exception as exc:
+            item["data"] = {"status": "error", "error": str(exc)}
+        watchlist_data.append(item)
+
     market_data = fetch_index_snapshot()
-    prompt = build_prompt(config, fund_data, market_data)
+    prompt = build_prompt(config, fund_data, watchlist_data, market_data)
     if dry_run:
         print("Dry run OK")
         print(f"Holdings: {len(config['holdings'])}")
         print(f"Fund data rows: {len(fund_data)}")
+        print(f"Aggressive watchlist rows: {len(watchlist_data)}")
         print(f"Market data keys: {', '.join(list(market_data.keys())[:8])}")
         print(f"Prompt chars: {len(prompt)}")
         return 0

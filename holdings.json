@@ -4,31 +4,63 @@
   "holdings": [
     {
       "name": "财通品质甄选混合C",
-      "code": "",
+      "code": "024481",
       "amount": 2919.66,
       "base_profit": 856.84,
       "base_return_pct": 41.54
     },
     {
       "name": "广发远见智选混合C",
-      "code": "",
+      "code": "016874",
       "amount": 5584.48,
       "base_profit": 1374.64,
       "base_return_pct": 32.65
     },
     {
       "name": "财通价值动量混合C",
-      "code": "",
+      "code": "021523",
       "amount": 945.87,
       "base_profit": 190.36,
       "base_return_pct": 25.2
     },
     {
       "name": "鹏华创新未来混合(LOF)C",
-      "code": "",
+      "code": "501205",
       "amount": 2176.84,
       "base_profit": 317.15,
       "base_return_pct": 17.05
+    }
+  ],
+  "aggressive_watchlist": [
+    {
+      "name": "易方达中证人工智能主题ETF联接C",
+      "code": "012734",
+      "theme": "人工智能/算力/应用"
+    },
+    {
+      "name": "天弘中证人工智能C",
+      "code": "011840",
+      "theme": "人工智能/算法/算力"
+    },
+    {
+      "name": "华夏国证半导体芯片ETF联接C",
+      "code": "008888",
+      "theme": "半导体/芯片"
+    },
+    {
+      "name": "国泰中证全指通信设备ETF联接C",
+      "code": "007818",
+      "theme": "通信设备/CPO/光模块"
+    },
+    {
+      "name": "富国中证港股通互联网ETF发起式联接C",
+      "code": "014674",
+      "theme": "港股互联网/平台经济"
+    },
+    {
+      "name": "华夏中证机器人ETF发起式联接C",
+      "code": "018345",
+      "theme": "机器人/智能制造"
     }
   ]
 }
