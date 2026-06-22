@@ -112,7 +112,7 @@ def fetch_index_snapshot() -> dict:
 
 
 def build_prompt(config: dict, fund_data: list[dict], market_data: dict) -> str:
-    today = dt.datetime.utcnow() + dt.timedelta(hours=8)
+    today = dt.datetime.now(dt.UTC) + dt.timedelta(hours=8)
     return f"""
 你是谨慎、可执行导向的中文基金交易策略助手。今天北京时间日期：{today:%Y-%m-%d %H:%M}。
 
@@ -187,6 +187,7 @@ def send_email(subject: str, body: str) -> None:
 
 
 def main() -> int:
+    dry_run = "--dry-run" in sys.argv
     config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
     fund_data = []
     for holding in config["holdings"]:
@@ -199,9 +200,17 @@ def main() -> int:
 
     market_data = fetch_index_snapshot()
     prompt = build_prompt(config, fund_data, market_data)
+    if dry_run:
+        print("Dry run OK")
+        print(f"Holdings: {len(config['holdings'])}")
+        print(f"Fund data rows: {len(fund_data)}")
+        print(f"Market data keys: {', '.join(list(market_data.keys())[:8])}")
+        print(f"Prompt chars: {len(prompt)}")
+        return 0
+
     strategy = call_model(prompt)
 
-    today = dt.datetime.utcnow() + dt.timedelta(hours=8)
+    today = dt.datetime.now(dt.UTC) + dt.timedelta(hours=8)
     subject = f"基金交易策略 - {today:%Y-%m-%d}"
     send_email(subject, strategy)
     print(f"Sent strategy email: {subject}")

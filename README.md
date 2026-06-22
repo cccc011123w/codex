@@ -31,6 +31,12 @@ GITHUB_MODEL=openai/gpt-4o
 
 6. 进入仓库 `Actions`，打开 `Daily Fund Strategy`，点击 `Run workflow` 手动测试一次。
 
+本地只验证配置和行情抓取时，可以运行：
+
+```bash
+python daily_fund_strategy.py --dry-run
+```
+
 ## 定时规则
 
 工作流现在设置为 UTC `06:30` 周一到周五运行，对应北京时间/香港时间 `14:30`。

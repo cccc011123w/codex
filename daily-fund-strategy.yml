@@ -1,0 +1,33 @@
+name: Daily Fund Strategy
+
+on:
+  schedule:
+    # 14:30 Asia/Hong_Kong / Asia/Shanghai = 06:30 UTC.
+    - cron: "30 6 * * 1-5"
+  workflow_dispatch:
+
+jobs:
+  send-strategy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      models: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate and send fund strategy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_MODEL: ${{ vars.GITHUB_MODEL || 'openai/gpt-4o' }}
+          QQMAIL_USER: ${{ secrets.QQMAIL_USER }}
+          QQMAIL_TO: ${{ secrets.QQMAIL_TO }}
+          QQMAIL_AUTH_CODE: ${{ secrets.QQMAIL_AUTH_CODE }}
+        run: python daily_fund_strategy.py
