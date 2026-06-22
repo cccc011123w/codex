@@ -6,7 +6,7 @@
 
 - GitHub 账号
 - QQ 邮箱 SMTP 授权码
-- OpenAI API Key
+- GitHub Models 可用权限。GitHub Actions 会自动提供 `GITHUB_TOKEN`，不需要单独配置 OpenAI API Key。
 
 ## 使用步骤
 
@@ -16,7 +16,6 @@
 4. 在 `Secrets` 里添加：
 
 ```text
-OPENAI_API_KEY=你的 OpenAI API Key
 QQMAIL_USER=1678221404@qq.com
 QQMAIL_TO=1678221404@qq.com
 QQMAIL_AUTH_CODE=你的 QQ 邮箱 SMTP 授权码
@@ -25,8 +24,10 @@ QQMAIL_AUTH_CODE=你的 QQ 邮箱 SMTP 授权码
 5. 可选：在 `Variables` 里添加：
 
 ```text
-OPENAI_MODEL=gpt-5.5
+GITHUB_MODEL=openai/gpt-4o
 ```
+
+你也可以换成 GitHub Models 市场里可用的其他模型，例如 DeepSeek、Meta Llama 等模型 ID。
 
 6. 进入仓库 `Actions`，打开 `Daily Fund Strategy`，点击 `Run workflow` 手动测试一次。
 

@@ -138,30 +138,35 @@ def build_prompt(config: dict, fund_data: list[dict], market_data: dict) -> str:
 """
 
 
-def call_openai(prompt: str) -> str:
-    api_key = require_env("OPENAI_API_KEY")
-    model = os.environ.get("OPENAI_MODEL", "gpt-5.5").strip() or "gpt-5.5"
+def call_model(prompt: str) -> str:
+    api_key = require_env("GITHUB_TOKEN")
+    model = os.environ.get("GITHUB_MODEL", "openai/gpt-4o").strip() or "openai/gpt-4o"
     response = http_post_json(
-        "https://api.openai.com/v1/responses",
+        "https://models.github.ai/inference/chat/completions",
         {
             "model": model,
-            "input": prompt,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "你是谨慎、可执行导向的中文基金交易策略助手。",
+                },
+                {"role": "user", "content": prompt},
+            ],
         },
-        {"Authorization": f"Bearer {api_key}"},
+        {
+            "Authorization": f"Bearer {api_key}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
     )
 
-    text_parts = []
-    for item in response.get("output", []):
-        for content in item.get("content", []):
-            if content.get("type") == "output_text":
-                text_parts.append(content.get("text", ""))
-    if text_parts:
-        return "\n".join(text_parts).strip()
+    choices = response.get("choices", [])
+    if choices:
+        content = choices[0].get("message", {}).get("content", "")
+        if content:
+            return str(content).strip()
 
-    if response.get("output_text"):
-        return str(response["output_text"]).strip()
-
-    raise RuntimeError(f"Could not parse OpenAI response: {json.dumps(response, ensure_ascii=False)[:1000]}")
+    raise RuntimeError(f"Could not parse model response: {json.dumps(response, ensure_ascii=False)[:1000]}")
 
 
 def send_email(subject: str, body: str) -> None:
@@ -194,7 +199,7 @@ def main() -> int:
 
     market_data = fetch_index_snapshot()
     prompt = build_prompt(config, fund_data, market_data)
-    strategy = call_openai(prompt)
+    strategy = call_model(prompt)
 
     today = dt.datetime.utcnow() + dt.timedelta(hours=8)
     subject = f"基金交易策略 - {today:%Y-%m-%d}"
